@@ -78,4 +78,9 @@ public class VoucherOrder implements Serializable {
     private LocalDateTime updateTime;
 
 
+    public VoucherOrder(Long id, Long userId, Long voucherId) {
+        this.id = id;
+        this.userId = userId;
+        this.voucherId = voucherId;
+    }
 }

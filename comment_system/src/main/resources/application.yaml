@@ -19,9 +19,21 @@ spring:
         time-between-eviction-runs: 10s
   jackson:
     default-property-inclusion: non_null # JSON处理时忽略非空字段
+  main:
+    allow-circular-references: true
+  mail:
+    host: smtp.qq.com
+    port: 25
+    username: 2985496686@qq.com
+    password: vvzgmygsnqtlddic
+    from: 2985496686@qq.com
+
+
+
 mybatis-plus:
   type-aliases-package: com.entity # 别名扫描包
   # mapper-locations: classpath*:mapper/*.xml
 logging:
   level:
     com: debug
+

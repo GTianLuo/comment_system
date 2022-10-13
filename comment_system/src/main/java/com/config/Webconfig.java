@@ -22,9 +22,10 @@ public class Webconfig implements WebMvcConfigurer {
                 "/follow/**",
                 "/user/logout",
                 "/user/me",
-                "/user/info/{id}"
-        ).order(1);
+                "/user/info/{id}",
+                "/voucher-order/**"
 
+        ).order(1);
         registry.addInterceptor(new RefreshInterceptor(stringRedisTemplate)).addPathPatterns("/**").order(0);
     }
 }

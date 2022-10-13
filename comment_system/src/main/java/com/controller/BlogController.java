@@ -63,6 +63,7 @@ public class BlogController {
         return Result.ok(records);
     }
 
+
     @GetMapping("/hot")
     public Result queryHotBlog(@RequestParam(value = "current", defaultValue = "1") Integer current) {
         // 根据用户查询

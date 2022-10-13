@@ -1,10 +1,24 @@
 package com.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.dto.Result;
+import com.dto.UserDTO;
+import com.entity.SeckillVoucher;
+import com.entity.Voucher;
 import com.entity.VoucherOrder;
 import com.mapper.VoucherOrderMapper;
+import com.service.ISeckillVoucherService;
 import com.service.IVoucherOrderService;
+import com.service.IVoucherService;
+import com.utils.RedisIdWords;
+import com.utils.UserHolder;
+import org.springframework.aop.framework.AopContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -17,4 +31,63 @@ import org.springframework.stereotype.Service;
 @Service
 public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, VoucherOrder> implements IVoucherOrderService {
 
+
+    @Resource
+    private ISeckillVoucherService seckillVoucherService;
+
+    @Resource
+    private RedisIdWords redisIdWords;
+
+    @Resource
+    private VoucherOrderServiceImpl voucherOrderService;
+
+    @Override
+    public Result seckillVoucher(Long voucherId) {
+        //查询优惠卷信息
+        SeckillVoucher voucher = seckillVoucherService.getById(voucherId);
+        //判断优惠劵秒杀是否开始
+        LocalDateTime now = LocalDateTime.now();
+        if(now.isBefore(voucher.getBeginTime())){
+            return Result.fail("秒杀未开始！");
+        }
+        //判断优惠卷秒杀是否结束
+        if (now.isAfter(voucher.getEndTime())){
+            return Result.fail("秒杀已经结束！");
+        }
+        //判断优惠卷库存
+        if(voucher.getStock() <= 0){
+            return Result.fail("优惠券已被抢空！");
+        }
+        synchronized (UserHolder.getUser().getId().toString().intern()){
+            return voucherOrderService.executeSeckillVoucher(voucherId);
+        }
+    }
+
+    /**
+     * 秒杀优惠卷
+     * @param voucherId 优惠卷id
+     */
+    @Transactional
+    public Result executeSeckillVoucher(Long voucherId) {
+        Long userId = UserHolder.getUser().getId();
+        Long orderId = redisIdWords.createId("voucher:id:" + voucherId);
+        VoucherOrder voucherOrder = new VoucherOrder(orderId,userId,voucherId);
+            //执行秒杀
+            //更新数据库库存
+            Integer count = query().eq("user_id", userId).eq("voucher_id",voucherId).count();
+            if(count > 0){
+                return Result.fail("重复秒杀！");
+            }
+            boolean updateSuccess = seckillVoucherService.update()
+                    .setSql("stock = stock - 1")
+                    .eq("voucher_id", voucherId)
+                    .gt("stock",0)
+                    .update();
+            if(!updateSuccess){
+                return Result.fail("郭天宇已被抢空！");
+            }
+            //保存订单
+            save(voucherOrder);
+            return Result.ok();
+    }
 }

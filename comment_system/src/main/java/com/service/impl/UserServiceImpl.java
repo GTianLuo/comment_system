@@ -11,7 +11,9 @@ import com.dto.Result;
 import com.dto.UserDTO;
 import com.entity.User;
 import com.mapper.UserMapper;
+import com.service.EmailService;
 import com.service.IUserService;
+import com.utils.EmailUtil;
 import com.utils.RegexUtils;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -26,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.utils.EmailUtil.EMAIL_SUBJECT;
 import static com.utils.RedisConstants.*;
 import static com.utils.SystemConstants.USER_NICK_NAME_PREFIX;
 
@@ -42,19 +45,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private EmailService emailService;
     @Override
-    public Result sendCode(String phone, HttpSession session) {
+    public Result sendCode(String email, HttpSession session) {
         //手机号校验
-        if(RegexUtils.isPhoneInvalid(phone)){
-            return Result.fail("手机号错误！");
+        if(RegexUtils.isEmailInvalid(email)){
+            return Result.fail("错误邮箱！");
         }
         //生成随机验证码
         String code = RandomUtil.randomNumbers(6);
         //发送验证码
         log.debug(code);
         System.out.println(code);
+        emailService.sendSimpleMail(email,EMAIL_SUBJECT, EmailUtil.format(code));
         //将验证码保存在redis
-        stringRedisTemplate.opsForValue().set(LOGIN_CODE_KEY + phone , code,LOGIN_CODE_TTL, TimeUnit.SECONDS);
+        stringRedisTemplate.opsForValue().set(LOGIN_CODE_KEY + email , code,LOGIN_CODE_TTL, TimeUnit.SECONDS);
         return Result.ok();
     }
 
@@ -62,22 +68,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     public Result login(LoginFormDTO loginForm, HttpSession session) {
 
         //校验手机号码
-        String phone = loginForm.getPhone();
-        if(RegexUtils.isPhoneInvalid(phone)){
-            return Result.fail("手机号错误！");
+        String email = loginForm.getEmail();
+        if(RegexUtils.isEmailInvalid(email)){
+            return Result.fail("错误邮箱！");
         }
         //从Redis中获取code
-        String cacheCode =  stringRedisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
+        String cacheCode =  stringRedisTemplate.opsForValue().get(LOGIN_CODE_KEY + email);
         String code = loginForm.getCode();
         //校验验证码
         if(!code.equals(cacheCode)){
             return Result.fail("无效验证码");
         }
         //查找用户信息
-        User user = query().eq("phone", phone).one();
+        User user = query().eq("phone", email).one();
         //用户不存在，创建用户
         if(user == null){
-            user = createNewUser(phone);
+            user = createNewUser(email);
             save(user);
         }
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);

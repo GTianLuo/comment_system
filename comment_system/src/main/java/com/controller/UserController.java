@@ -37,12 +37,12 @@ public class UserController {
     private IUserInfoService userInfoService;
 
     /**
-     * 发送手机验证码
+     * 发送邮箱验证码
      */
     @PostMapping("/code")
-    public Result sendCode(@RequestParam("phone") String phone, HttpSession session) {
+    public Result sendCode(@RequestParam("email") String email, HttpSession session) {
         //  发送短信验证码并保存验证码
-        return userService.sendCode(phone,session);
+        return userService.sendCode(email,session);
     }
 
     /**
