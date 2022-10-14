@@ -11,6 +11,7 @@ import com.service.ISeckillVoucherService;
 import com.service.IVoucherOrderService;
 import com.service.IVoucherService;
 import com.utils.RedisIdWords;
+import com.utils.RedisSpinLock;
 import com.utils.UserHolder;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     @Resource
     private VoucherOrderServiceImpl voucherOrderService;
 
+    @Resource
+    private RedisSpinLock redisSpinLock;
+
     @Override
     public Result seckillVoucher(Long voucherId) {
         //查询优惠卷信息
@@ -58,8 +62,18 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         if(voucher.getStock() <= 0){
             return Result.fail("优惠券已被抢空！");
         }
-        synchronized (UserHolder.getUser().getId().toString().intern()){
+        String key = UserHolder.getUser().getId().toString().intern();
+        try {
+            boolean isLock = redisSpinLock.lock(key);
+            if (!isLock){
+                //获取锁失败
+                return Result.fail("禁止连续秒杀！");
+            }
             return voucherOrderService.executeSeckillVoucher(voucherId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }finally {
+            redisSpinLock.unLock(key);
         }
     }
 
@@ -76,7 +90,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             //更新数据库库存
             Integer count = query().eq("user_id", userId).eq("voucher_id",voucherId).count();
             if(count > 0){
-                return Result.fail("重复秒杀！");
+                return Result.fail("重复秒杀郭天宇！");
             }
             boolean updateSuccess = seckillVoucherService.update()
                     .setSql("stock = stock - 1")
@@ -84,7 +98,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                     .gt("stock",0)
                     .update();
             if(!updateSuccess){
-                return Result.fail("郭天宇已被抢空！");
+                return Result.fail("优惠卷已被抢空！");
             }
             //保存订单
             save(voucherOrder);

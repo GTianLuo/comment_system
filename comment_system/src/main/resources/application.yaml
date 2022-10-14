@@ -1,6 +1,18 @@
 server:
   port: 8081
 spring:
+  mail:
+    host: smtp.163.com
+    password: JIRODMMFZZCHBFNA
+    username: g2985496686@163.com
+    from: g2985496686@163.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
   application:
     name: hmdp
   datasource:
@@ -9,7 +21,7 @@ spring:
     password: 111111
     driver-class-name: com.mysql.cj.jdbc.Driver
   redis:
-    host: localhost
+    host: 192.168.1.169
     port: 6379
     lettuce:
       pool:
@@ -17,18 +29,11 @@ spring:
         max-idle: 10
         min-idle: 1
         time-between-eviction-runs: 10s
+    password: 111111
   jackson:
     default-property-inclusion: non_null # JSON处理时忽略非空字段
   main:
     allow-circular-references: true
-  mail:
-    host: smtp.qq.com
-    port: 25
-    username: 2985496686@qq.com
-    password: vvzgmygsnqtlddic
-    from: 2985496686@qq.com
-
-
 
 mybatis-plus:
   type-aliases-package: com.entity # 别名扫描包
@@ -36,4 +41,8 @@ mybatis-plus:
 logging:
   level:
     com: debug
+
+
+
+
 
