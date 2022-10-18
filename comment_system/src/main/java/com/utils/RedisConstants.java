@@ -19,4 +19,5 @@ public class RedisConstants {
     public static final String SHOP_SPINLOCK_KEY = "shop:spinlock:";
 
 
+
 }

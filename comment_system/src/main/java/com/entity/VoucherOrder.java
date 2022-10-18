@@ -77,10 +77,28 @@ public class VoucherOrder implements Serializable {
      */
     private LocalDateTime updateTime;
 
+    public VoucherOrder() {
+    }
 
     public VoucherOrder(Long id, Long userId, Long voucherId) {
         this.id = id;
         this.userId = userId;
         this.voucherId = voucherId;
+    }
+
+    @Override
+    public String toString() {
+        return "VoucherOrder{" +
+                "id=" + id +
+                ", userId=" + userId +
+                ", voucherId=" + voucherId +
+                ", payType=" + payType +
+                ", status=" + status +
+                ", createTime=" + createTime +
+                ", payTime=" + payTime +
+                ", useTime=" + useTime +
+                ", refundTime=" + refundTime +
+                ", updateTime=" + updateTime +
+                '}';
     }
 }

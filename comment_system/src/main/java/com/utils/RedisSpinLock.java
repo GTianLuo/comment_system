@@ -24,8 +24,8 @@ public class RedisSpinLock {
 
     private static final String KEY_PREFIX = "lock:";
 
-    private static final String THREAD_FLAG = UUID.randomUUID().toString(true) + "-"
-            +Thread.currentThread().getName();
+    //UUID是为了防止不同服务器上出现相同的线程名
+    private static final String THREAD_FLAG_PREFIX = UUID.randomUUID().toString(true) + "-";
 
     private static final DefaultRedisScript UNLOCK_SCRIPT;
 
@@ -34,17 +34,30 @@ public class RedisSpinLock {
         UNLOCK_SCRIPT.setLocation(new ClassPathResource("lua/unlock.lua"));
     }
 
+
     public boolean lock(String key){
-        //获取当前线程名
-        Boolean isLock = stringRedisTemplate.opsForValue().setIfAbsent(KEY_PREFIX + key,THREAD_FLAG, 60, TimeUnit.SECONDS);
+        //线程唯一标识
+        String threadFlag = THREAD_FLAG_PREFIX + Thread.currentThread().getName();
+        Boolean isLock = stringRedisTemplate.opsForValue()
+                .setIfAbsent(KEY_PREFIX + key,threadFlag,60, TimeUnit.SECONDS);
         return Boolean.TRUE.equals(isLock);
+    }
+
+    public boolean tryLock(String key){
+        //线程唯一标识
+        String threadFlag = THREAD_FLAG_PREFIX + Thread.currentThread().getName();
+        stringRedisTemplate.opsForHash().putIfAbsent(KEY_PREFIX + key,threadFlag,1);
+
+        return true;
     }
 
 
     public void unLock(String key){
+        //线程唯一标识
+        String threadFlag = THREAD_FLAG_PREFIX + Thread.currentThread().getName();
         List<String> keyList = new LinkedList<>();
         keyList.add(KEY_PREFIX + key);
-        stringRedisTemplate.execute(UNLOCK_SCRIPT,keyList,THREAD_FLAG);
+        stringRedisTemplate.execute(UNLOCK_SCRIPT,keyList,threadFlag);
     }
 
 

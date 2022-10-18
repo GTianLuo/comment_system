@@ -18,6 +18,7 @@ public class Webconfig implements WebMvcConfigurer {
         registry.addInterceptor(new LoginInterceptor(stringRedisTemplate)).addPathPatterns(
                 "/blog/like/*",
                 "/blog/of/me",
+                "/blog",
                 "/upload/**",
                 "/follow/**",
                 "/user/logout",
