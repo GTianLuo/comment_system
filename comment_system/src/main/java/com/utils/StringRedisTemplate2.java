@@ -76,6 +76,15 @@ public class StringRedisTemplate2 {
     }
 
 
+    /**
+     *  使用物理过期(永不过期)解决缓存击穿
+     *  我们不为缓存中的数据设置过期时间,我们使用RedisData将需要存入缓存的数据进行封装。
+     *  RedisData中有一个属性为expireTime，当我们从缓存中查出数据后需要检查当前数据是否过期
+     *  数据未过期直接返回，
+     *  数据过期，需要开启一个线程进行缓存重建，然后直接将旧数据进行返回，同时需要使用互斥锁保证只会有
+     *  线程进行缓存的重建
+     *
+     */
     public <T, ID> T getWithLogicalExpire(String key, ID id, Long timeout, Class<T> type, Function<ID, T> function) {
         //查询缓存
         String redisDataCache = stringRedisTemplate.opsForValue().get(key);
@@ -87,17 +96,17 @@ public class StringRedisTemplate2 {
             JSONObject data = (JSONObject) redisData.getData();
             value = JSONUtil.toBean(data, type);
             //检查缓存是否过期
-            if (redisData.getExpireTime().isBefore(LocalDateTime.now())) {
+            if (redisData.getExpireTime().isAfter(LocalDateTime.now())) {
                 //缓存没有过期
                 return value;
             }
         }
         //缓存过期
         //加锁
-        boolean lock = redisSpinLock.lock(key);
+        boolean lock = redisSpinLock.lock(key.intern());
         if (lock) {
             try {
-                if (redisData != null && redisData.getExpireTime().isBefore(LocalDateTime.now())) {
+                if (redisData != null && redisData.getExpireTime().isAfter(LocalDateTime.now())) {
                     //在获取锁过程中缓存已经被更新
                     return value;
                 }
@@ -107,7 +116,7 @@ public class StringRedisTemplate2 {
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
-                redisSpinLock.unLock(key);
+                redisSpinLock.unLock(key.intern());
             }
         }
         return value;
@@ -126,6 +135,4 @@ public class StringRedisTemplate2 {
         //存入缓存
         stringRedisTemplate.opsForValue().set(key, redisDataJson);
     }
-
-
 }

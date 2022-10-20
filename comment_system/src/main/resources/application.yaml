@@ -21,7 +21,7 @@ spring:
     password: 111111
     driver-class-name: com.mysql.cj.jdbc.Driver
   redis:
-    host: 192.168.122.1     # 192.168.1.171
+    host: 192.168.1.171     # 192.168.1.171
     port: 6379
     lettuce:
       pool:

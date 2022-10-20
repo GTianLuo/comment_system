@@ -19,11 +19,13 @@ public class Webconfig implements WebMvcConfigurer {
                 "/blog/like/*",
                 "/blog/of/me",
                 "/blog",
+                "/blog/*",
+                "/blog/of/follow",
                 "/upload/**",
                 "/follow/**",
                 "/user/logout",
                 "/user/me",
-                "/user/info/{id}",
+                "/user/info/*",
                 "/voucher-order/**"
 
         ).order(1);

@@ -1,6 +1,7 @@
 package com.hmdp;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.json.JSONUtil;
 import com.entity.VoucherOrder;
 import com.service.EmailService;
 import com.utils.RedisIdWords;
@@ -15,6 +16,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 
 import javax.annotation.Resource;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -112,5 +114,17 @@ class HmDianPingApplicationTests {
                 //handlePendingList();
             }
         }
+    }
+
+    @Test
+    public void testSetToJson(){
+        Set set = new  HashSet();
+        set.add(1);
+        set.add(2);
+        set.add(3);
+        set.add(4);
+        String s = JSONUtil.toJsonStr(set);
+        System.out.println(System.currentTimeMillis());
+        //http://localhost:8080/api/blog/of/follow?&lastId=1666175488861
     }
 }

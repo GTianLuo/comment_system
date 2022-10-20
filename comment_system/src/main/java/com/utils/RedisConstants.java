@@ -18,6 +18,10 @@ public class RedisConstants {
 
     public static final String SHOP_SPINLOCK_KEY = "shop:spinlock:";
 
+    public static final String BLOG_LIKED_KEY = "blog:liked:";
 
+    public static final String USER_FOLLLOW_KEY = "user:follow:";
+
+    public static final String FOLLOW_BLOG_KEY = "follow:pushBlog:";
 
 }

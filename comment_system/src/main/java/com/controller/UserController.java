@@ -87,4 +87,9 @@ public class UserController {
         // 返回
         return Result.ok(info);
     }
+
+    @GetMapping("/{userId}")
+    public Result queryUser(@PathVariable Long userId){
+        return userService.queryUser(userId);
+    }
 }

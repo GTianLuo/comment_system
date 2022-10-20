@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dto.Result;
 import com.dto.UserDTO;
 import com.entity.Blog;
-import com.entity.User;
 import com.service.IBlogService;
 import com.service.IUserService;
 import com.utils.SystemConstants;
@@ -20,9 +19,6 @@ import java.util.List;
  * <p>
  * 前端控制器
  * </p>
- *
- * @author 虎哥
- * @since 2021-12-22
  */
 @RestController
 @RequestMapping("/blog")
@@ -35,21 +31,13 @@ public class BlogController {
 
     @PostMapping
     public Result saveBlog(@RequestBody Blog blog) {
-        // 获取登录用户
-        UserDTO user = UserHolder.getUser();
-        blog.setUserId(user.getId());
-        // 保存探店博文
-        blogService.save(blog);
-        // 返回id
-        return Result.ok(blog.getId());
+        return blogService.saveBlog(blog);
     }
 
     @PutMapping("/like/{id}")
     public Result likeBlog(@PathVariable("id") Long id) {
-        // 修改点赞数量
-        blogService.update()
-                .setSql("liked = liked + 1").eq("id", id).update();
-        return Result.ok();
+
+        return blogService.likeBlog(id);
     }
 
     @GetMapping("/of/me")
@@ -67,19 +55,38 @@ public class BlogController {
 
     @GetMapping("/hot")
     public Result queryHotBlog(@RequestParam(value = "current", defaultValue = "1") Integer current) {
-        // 根据用户查询
-        Page<Blog> page = blogService.query()
-                .orderByDesc("liked")
-                .page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
-        // 获取当前页数据
-        List<Blog> records = page.getRecords();
-        // 查询用户
-        records.forEach(blog ->{
-            Long userId = blog.getUserId();
-            User user = userService.getById(userId);
-            blog.setName(user.getNickName());
-            blog.setIcon(user.getIcon());
-        });
-        return Result.ok(records);
+        return blogService.queryHotBlog(current);
     }
+
+
+    @GetMapping("/{id}")
+    public Result queryBlogById(@PathVariable Long id){
+        return blogService.queryBlogById(id);
+    }
+
+    @GetMapping("/likes/{id}")
+    public Result queryBlogLikes(@PathVariable Long id){
+        return blogService.queryBlogLikes(id);
+    }
+
+    /**
+     * 查询某一用户的blog信息
+     * @param userId 用户id
+     * @param current 页码
+     */
+    @GetMapping("/of/user")
+    public Result queryUserBlog(@RequestParam("id") Long userId, @RequestParam("current") Integer current ){
+        return blogService.queryUserBlog(userId,current);
+    }
+
+    /**
+     * 查询关注用户的Blog
+     */
+    @GetMapping("/of/follow")
+    public Result queryFollowBlog(@RequestParam("lastId") Long lastId,
+                                  @RequestParam(value = "offset",defaultValue = "0") Integer offset){
+        return blogService.queryFollowBlog(lastId,offset);
+    }
+
+
 }

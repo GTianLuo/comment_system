@@ -16,9 +16,7 @@ import com.service.IUserService;
 import com.utils.EmailUtil;
 import com.utils.RegexUtils;
 import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -109,5 +107,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         User user = new User(phone);
         user.setNickName(USER_NICK_NAME_PREFIX + RandomUtil.randomString(10));
         return user;
+    }
+
+
+    @Override
+    public Result queryUser(Long userId) {
+        User user = getById(userId);
+        if (user != null){
+            return Result.ok(user);
+        }else{
+            return Result.fail("未查询到该用户消息！");
+        }
     }
 }

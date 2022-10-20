@@ -176,6 +176,8 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         if(voucher.getStock() <= 0){
             return Result.fail("优惠券已被抢空！");
         }
+        //因为Lang底层的toString方法是通过new的方式创建的字符串，所以这里不能直接锁字符串
+        //inter方法会直接返回字符串在常量池中的地址
         String key = UserHolder.getUser().getId().toString().intern();
         try {
             boolean isLock = redisSpinLock.lock(key);

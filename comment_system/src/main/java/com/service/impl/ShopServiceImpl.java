@@ -31,9 +31,6 @@ import static com.utils.RedisConstants.*;
  * <p>
  * 服务实现类
  * </p>
- *
- * @author 虎哥
- * @since 2021-12-22
  */
 @Service
 public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
@@ -60,6 +57,11 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         return Result.ok(shop);
     }
 
+    /**
+     * 用于解决缓存穿透 ------- 在缓存中存入空值
+     * @param id
+     * @return
+     */
     public Shop queryByIdWithPassThrough(Long id) {
         //先从缓存中查询商品信息
         Map shopMap = stringRedisTemplate.opsForHash()
@@ -96,6 +98,15 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         return shop;
     }
 
+
+    /**
+     * 使用互斥锁解决缓存击穿问题 ----- 为缓存中的数据设置过期时间
+     * 先从缓存中查询数据，数据不存在时，需要我们从数据库中同步数据
+     * 在同步数据时需要使用互斥锁，防止大量线程同时进行缓存重建，
+     * 为抢夺到互斥锁的线程会等待其它线程完成缓存的同步
+     * @param id
+     * @return
+     */
     public Shop queryByIdWithMutex(Long id) {
         //先从缓存中查询商品信息
         Map shopMap = stringRedisTemplate.opsForHash()
